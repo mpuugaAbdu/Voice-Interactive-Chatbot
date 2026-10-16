@@ -1,500 +1,154 @@
-# 🎙️ TME Education 10th Anniversary Voice-Interactive Chatbot
+# TME Education 10th Anniversary Voice-Interactive Chatbot
 
-An offline voice-interactive embedded system developed to celebrate the **10th Anniversary of TME Education**.
+This project presents the design and implementation of an offline voice-interactive chatbot developed for the TME Education 10th Anniversary celebration. The system uses an Arduino Uno as the main controller and a VC-02 offline voice-recognition module to recognize predefined spoken questions and provide corresponding voice responses without requiring an internet connection. Users can interact with the chatbot to obtain information about TME Education and its 10th anniversary celebration.
 
-The project combines the **TME Education Board (TME-EDU-ARD-2)** with a **VC-02 Offline Voice Recognition Module** to create an interactive chatbot capable of recognizing predefined voice commands, providing spoken responses, and triggering corresponding visual animations.
+To enhance user interaction, an SH1106 OLED display presents animated chatbot expressions, including blinking, eye movements, happy and excited faces, and celebration animations. A 16x2 LCD continuously displays the anniversary message, while NeoPixel LEDs provide dynamic, colorful lighting. The project demonstrates how embedded systems, offline voice recognition, displays, and interactive visual effects can be integrated into an engaging educational human-machine interaction system.
 
-The system operates **offline** and does not require an internet connection.
+## Project video
 
----
+[Watch the TME Education 10th Anniversary Voice-Interactive Chatbot demonstration on YouTube](https://youtu.be/8j01JvC5oN0?si=cfuaJ4DatR63d894)
 
-## 📌 Project Overview
+![Completed TME Education voice-interactive chatbot](Images/image%20one.png)
 
-The chatbot was developed as an interactive demonstration for the **TME Education 10th Anniversary celebration**.
+## Development process
 
-A user can ask predefined questions such as:
+### 1. Define the chatbot requirements
 
-- "Who are you?"
-- "What is TME Education?"
-- "What are we celebrating?"
-- "How old is TME Education?"
-- "When is the celebration?"
-- "Where is the celebration?"
-- "What time does it start?"
-- "What will happen today?"
-- "Say happy anniversary!"
-- "Show me how to celebrate!"
+The first step was to determine what the system should do. The chatbot was designed to:
 
-The **VC-02** recognizes the spoken command and provides a predefined voice response. At the same time, it sends a hexadecimal command through UART to the TME-EDU-ARD-2 board.
+- Recognize predefined questions about TME Education and the 10th anniversary celebration.
+- Provide spoken responses.
+- Display expressive animations.
+- Show an anniversary message.
+- Provide colorful lighting effects.
 
-The board then executes the corresponding visual animation.
+### 2. Prepare the TME-EDU-ARD-2 board
 
----
+The TME Education Board was selected as the main development platform. Its integrated Arduino Uno-based controller, OLED display, 16x2 LCD, and addressable NeoPixel LEDs provide the chatbot's control and visual functions.
 
-## ✨ Main Features
+![VC-02 module and TME-EDU-ARD-2 board](Images/report-hardware-overview.png)
 
-- Offline voice recognition
-- Offline spoken responses
-- UART communication between VC-02 and TME-EDU-ARD-2
-- Animated chatbot expressions
-- Blinking eyes
-- Looking left and right
-- Happy and excited facial expressions
-- Anniversary animations
-- Dancing celebration animation
-- Confetti effects
-- Automatic idle animations
-- 16×2 LCD anniversary message
-- Colorful NeoPixel celebration lighting
-- No Wi-Fi or internet connection required
-- Memory-optimized for the Arduino Uno-based platform
+### 3. Configure the VC-02 offline voice module
 
----
+The VC-02 was configured through the [Ai-Thinker Voice Open Platform](https://voice.ai-thinker.com/) to perform offline speech recognition, generate predefined voice responses, and transmit command bytes to the TME Education Board. Configuration was completed in three main stages.
 
-## 🧩 Hardware
+#### UART pin selection and configuration
 
-### Main Platform
+The UART interface enables communication between the VC-02 and the TME Education Board. In the pin configuration page:
 
-**TME Education Board – TME-EDU-ARD-2**
+- `GPIO_B7` was assigned as `UART1_TX`.
+- `GPIO_B6` was assigned as `UART1_RX`.
+- Baud rate: `9600`.
+- Data bits: `8`.
+- Stop bits: `1`.
+- Parity: no check bit.
 
-The project makes use of features available on the TME Education Board, including:
+![VC-02 UART pin configuration](Images/report-uart-pin-configuration.png)
 
-- Arduino Uno-based controller
-- OLED display
-- 16×2 LCD
-- Addressable NeoPixel LEDs
+`UART1_TX` is the important signal for this project because the VC-02 sends a command to the Arduino whenever a recognized offline command is triggered.
 
-### External Module
-
-**VC-02 Offline Voice Recognition Module**
-
-The VC-02 is used for:
-
-- Offline speech recognition
-- Predefined voice responses
-- UART command transmission
-
-The VC-02 is the external voice-interface module used in the project.
-
----
-
-## 🏗️ System Architecture
+The physical communication connections are:
 
 ```text
-             USER
-              │
-              │ Voice command
-              ▼
-        ┌─────────────┐
-        │    VC-02    │
-        │   Offline   │
-        │    Voice    │
-        │ Recognition │
-        └──────┬──────┘
-               │
-        Spoken │ Response
-               │
-               └────────────► User
-
-               │
-               │ UART command
-               │ 01 ... 0D
-               ▼
-      ┌────────────────────┐
-      │ TME-EDU-ARD-2      │
-      │ Arduino Controller │
-      └─────────┬──────────┘
-                │
-        ┌───────┼─────────┐
-        ▼       ▼         ▼
-      OLED    16×2 LCD  NeoPixels
-        │       │         │
-    Chatbot   Anniversary Colorful
-   Animations   Message   Lighting
+VC-02 UART1_TX -> TME Education Board / Arduino RX (D2)
+VC-02 GND      -> TME Education Board GND
 ```
 
----
+The Arduino receives the VC-02 data on D2 through the `SoftwareSerial` library. A common ground must be connected between the VC-02 and the TME Education Board.
 
-# 🗣️ VC-02 Configuration
+#### Customized offline command configuration
 
-The VC-02 is configured using the **Ai-Thinker Voice Open Platform**.
+The next stage is completed under **Customize offline command words and response words**. Select **Add** to create a custom offline command. Each chatbot interaction contains three important fields:
 
-The configuration consists of three main stages:
+- **Behavior:** the internal identifier for the interaction, such as `Hello` or `Who_are_you`.
+- **Command word:** one or more phrases that the user can say to trigger the behavior.
+- **Reply word:** the response spoken by the VC-02 after the command is recognized.
 
-1. UART pin configuration
-2. Customized offline command configuration
-3. Control-details configuration
+![Customized offline commands and responses](Images/report-offline-commands.png)
 
----
+#### Control details configuration
 
-## 1. UART Pin Configuration
+After creating an offline command, open the **Control details** section to define the data that the VC-02 transmits when the behavior is activated.
 
-The VC-02 UART interface is configured as follows:
+![Control details tab](Images/report-control-details-tab.png)
 
-| Parameter | Configuration |
-|---|---|
-| UART RX | UART1_RX – Pin 7 |
-| UART TX | UART1_TX – Pin 8 |
-| Baud Rate | 9600 |
-| Data Bits | 8 |
-| Stop Bits | 1 |
-| Parity | None |
+For each command, configure:
 
-For this project, **UART1_TX** is particularly important because the VC-02 sends a command to the TME Education Board whenever a voice command is successfully recognized.
+- **Control type:** `UART1_TX`.
+- **Action:** `Send`.
+- **Parameter:** the unique hexadecimal value assigned to the behavior.
 
-### UART Connection
+For example, the `Hello` behavior uses parameter `01`.
+
+![Adding a UART control action](Images/report-add-control.png)
+
+The parameter field uses hexadecimal data. Therefore, `01` represents the byte value `0x01`; it must not be treated as the ASCII characters `0` and `1`.
+
+#### Assign unique UART commands
+
+A unique hexadecimal value is assigned to every chatbot behavior so the Arduino can determine which question was recognized.
+
+| Behavior | Voice interaction | UART parameter |
+|---|---|---:|
+| `Hello` | Greeting | `01` |
+| `Who_are_you` | Chatbot identity | `02` |
+| `what_is_tme` | Information about TME Education | `03` |
+| `celebrating` | What is being celebrated | `04` |
+| `how_old` | Age of TME Education | `05` |
+| `when_is_it` | Anniversary date | `06` |
+| `where_is_it` | Celebration venue | `07` |
+| `start_time` | Starting time | `08` |
+| `end_time` | Ending time | `09` |
+| `happen` | Activities at the event | `0A` |
+
+![UART command mapping](Images/report-uart-command-mapping.png)
+
+For more guidance on configuring the Ai-Thinker offline voice module, watch this [VC-02 configuration tutorial](https://www.youtube.com/watch?v=dAqX4CmozfM&t=6s).
+
+### 4. Develop the OLED chatbot animations
+
+Different animations were programmed for the board's OLED display to give the chatbot a visual personality. They include:
+
+- Normal eyes.
+- Blinking and double blinking.
+- Looking left and right.
+- Happy and excited expressions.
+- Anniversary animations.
+- Dancing characters.
+- Celebration effects.
+
+Different animations are associated with different voice commands.
+
+### 5. Configure the 16x2 LCD
+
+The board's LCD continuously displays a simple anniversary message without scrolling:
 
 ```text
-VC-02 UART1_TX (Pin 8)
-          │
-          ▼
-TME-EDU-ARD-2 / Arduino RX
-
-VC-02 GND
-          │
-          ▼
-TME-EDU-ARD-2 GND
+HAPPY 10TH
+TME EDUCATION
 ```
 
-A common ground must be provided between both systems.
+This provides a permanent visual indication of the project's purpose while the OLED performs the interactive chatbot animations.
 
----
+### 6. Program the NeoPixel lighting
 
-## 2. Customized Offline Commands
+The integrated addressable NeoPixel LEDs remain illuminated and continuously cycle through different colors. The changing colors create a more attractive celebration effect and make the chatbot visually engaging during demonstrations.
 
-Offline commands are created under:
+### 7. Integrate voice commands with animations
 
-**Customize offline command words and response words**
+A command-processing function was developed on the Arduino. When a hexadecimal command is received from the VC-02, the program identifies the command and runs the corresponding OLED animation. For example, asking about the age of TME Education triggers the 10-year celebration animation, while the celebration command activates the dancing and anniversary sequence.
 
-Each interaction contains three important elements:
+## Source code and libraries
+
+The [final Arduino code](final_code/final_code.ino) contains custom Arduino libraries for the TME-EDU-ARD-2. Import the required libraries before uploading the program to the Arduino Uno.
+
+## Repository contents
 
 ```text
-Behavior
-Command Word
-Reply Word
+Voice-Interactive Chatbot/
+|-- final_code/
+|   `-- final_code.ino
+|-- Images/
+|-- report.docx
+`-- README.md
 ```
-
-### Behavior
-
-The behavior acts as the internal identifier for a particular interaction.
-
-Examples include:
-
-```text
-Hello
-Who_are_you
-what_is_tme
-celebrating
-how_old
-when_is_it
-where_is_it
-start_time
-end_time
-happen
-Say_happy
-celebrate
-goodbye
-```
-
-### Command Word
-
-The command word defines what the user can say to activate a behavior.
-
-Multiple alternative phrases can be configured for the same behavior.
-
-For example:
-
-```text
-Who are you?
-What are you?
-Your name?
-```
-
-All these phrases can activate the same `Who_are_you` behavior.
-
-### Reply Word
-
-The reply word specifies what the VC-02 says after recognizing the corresponding command.
-
-Example:
-
-```text
-User:
-"Who are you?"
-
-VC-02:
-"I am the TME Education anniversary assistant."
-```
-
-Voice recognition and the spoken responses are handled locally by the VC-02.
-
----
-
-## 3. Control Details Configuration
-
-After creating an offline command, a corresponding UART control action is configured under **Control Details**.
-
-The configuration is:
-
-```text
-Control Type : UART1_TX
-Action       : Send
-Parameter    : Hexadecimal command
-```
-
-For example:
-
-```text
-Behavior     : Hello
-Control Type : UART1_TX
-Action       : Send
-Parameter    : 01
-```
-
-When the user says **"Hello"**, the VC-02 recognizes the command, speaks its configured response, and sends the hexadecimal byte `01` through UART.
-
-The Arduino receives the byte as:
-
-```cpp
-0x01
-```
-
-and executes the corresponding animation.
-
----
-
-## 🔢 UART Command Mapping
-
-| Hex Command | Behavior | Function |
-|---|---|---|
-| `0x01` | Hello | Greeting animation |
-| `0x02` | Who_are_you | Friendly chatbot animation |
-| `0x03` | what_is_tme | TME Education information |
-| `0x04` | celebrating | Anniversary animation |
-| `0x05` | how_old | 10-year celebration |
-| `0x06` | when_is_it | Event date |
-| `0x07` | where_is_it | Event venue |
-| `0x08` | start_time | Starting time |
-| `0x09` | end_time | Ending time |
-| `0x0A` | happen | Event/activity animation |
-| `0x0B` | Say_happy | Happy anniversary animation |
-| `0x0C` | celebrate | Full celebration animation |
-| `0x0D` | goodbye | Goodbye animation |
-
----
-
-## 💻 Arduino Command Processing
-
-The Arduino receives the command from the VC-02 and uses a `switch` statement to determine which animation should run.
-
-Example:
-
-```cpp
-switch (command) {
-
-  case 0x01:
-    happyFace();
-    break;
-
-  case 0x02:
-    friendlyFace();
-    break;
-
-  case 0x04:
-    anniversaryAnimation();
-    break;
-
-  case 0x0C:
-    celebrationAnimation();
-    break;
-
-  case 0x0D:
-    goodbyeAnimation();
-    break;
-}
-```
-
-This creates a direct relationship between the recognized voice command and the visual behavior of the chatbot.
-
----
-
-# 🤖 OLED Chatbot Animations
-
-The OLED provides the visual personality of the chatbot.
-
-The implemented animations include:
-
-- Normal eyes
-- Blinking
-- Double blinking
-- Looking left
-- Looking right
-- Happy expression
-- Excited expression
-- Anniversary animation
-- Confetti effects
-- Dancing characters
-- Full celebration sequence
-- Goodbye animation
-
-When no voice command is being received, the chatbot performs random idle animations to make it appear active and responsive.
-
----
-
-## 🖥️ LCD Display
-
-The integrated 16×2 LCD displays a permanent anniversary message:
-
-```text
-   HAPPY 10TH
- TME EDUCATION
-```
-
-A fixed message was selected instead of scrolling text to provide a clean and easily readable display during the demonstration.
-
----
-
-## 🌈 NeoPixel Lighting
-
-The addressable NeoPixel LEDs on the TME Education Board provide colorful celebration lighting.
-
-The LEDs remain illuminated and automatically cycle through different colors while the chatbot is operating.
-
-This adds a visual celebration effect to complement the OLED animations and LCD message.
-
----
-
-# 💾 Memory Optimization
-
-The project runs on an Arduino Uno-based platform with limited SRAM.
-
-To reduce memory consumption, the SH1106 OLED uses the **U8g2 page-buffer mode**:
-
-```cpp
-U8G2_SH1106_128X64_NONAME_1_HW_I2C u8g2(
-    U8G2_R0,
-    U8X8_PIN_NONE
-);
-```
-
-The `_1_` page-buffer configuration consumes significantly less SRAM than using a full display framebuffer.
-
-This optimization allows the chatbot animations, UART communication, LCD, and lighting functions to operate together on the embedded platform.
-
----
-
-# 📚 Required Arduino Libraries
-
-Install the required libraries through the Arduino IDE Library Manager before compiling the project.
-
-```text
-U8g2
-hd44780
-Adafruit NeoPixel
-SoftwareSerial
-Wire
-```
-
-`Wire` and `SoftwareSerial` are included with the Arduino environment.
-
----
-
-# 🚀 Operating Sequence
-
-```text
-1. Power ON the system
-            ↓
-2. Initialize TME-EDU-ARD-2
-            ↓
-3. Initialize OLED
-            ↓
-4. Initialize LCD
-            ↓
-5. Initialize NeoPixels
-            ↓
-6. Initialize VC-02 UART communication
-            ↓
-7. Display chatbot idle animation
-            ↓
-8. Wait for a voice command
-            ↓
-9. VC-02 recognizes the command
-            ↓
-10. VC-02 speaks the configured response
-            ↓
-11. VC-02 sends hexadecimal UART command
-            ↓
-12. TME-EDU-ARD-2 receives command
-            ↓
-13. Corresponding OLED animation executes
-            ↓
-14. Return to idle chatbot mode
-```
-
----
-
-# 🎯 Educational Objectives
-
-This project demonstrates practical concepts in:
-
-- Embedded systems development
-- Offline voice recognition
-- Human-machine interaction
-- UART serial communication
-- I²C communication
-- OLED graphics and animation
-- LCD interfacing
-- Addressable LED control
-- Arduino programming
-- Memory optimization
-- Event-driven embedded system design
-
-It demonstrates how multiple embedded technologies can be integrated into a single interactive application.
-
----
-
-# 🎉 TME Education 10th Anniversary
-
-The project was developed to celebrate **10 years of TME Education** and demonstrate the possibilities of hands-on electronics and embedded systems education.
-
-It provides an interactive way for visitors to learn about TME Education while experiencing voice recognition, embedded programming, electronics, and visual animation in action.
-
-**10 Years of Learning, Technology, Innovation and Shared Passion.**
-
-**Together we'll go further!**
-
----
-
-## 📂 Repository Structure
-
-```text
-Voice-Interactive-Chatbot/
-│
-├── final_code/
-│   └── TME Education Anniversary Chatbot source code
-│
-└── README.md
-```
-
----
-
-## 👨‍💻 Author
-
-**Mpuuga Abdu Nasser**  
-TME Education Tutor – Uganda
-
-Embedded Systems | Electronics | IoT | Robotics | Embedded AI
-
----
-
-## 📜 Project Status
-
-**Completed – TME Education 10th Anniversary Demonstration Project**
-
----
-
-## ⭐ Support
-
-If you find this project useful or educational, consider giving the repository a **star ⭐**.
-
-Feel free to explore the source code, learn from the implementation, and use the project as inspiration for your own embedded systems and offline voice-interaction projects.
